@@ -1,6 +1,7 @@
 package controllers;
 
 import dto.Car;
+import dto.CarsDto;
 import dto.TokenDto;
 import dto.User;
 import io.restassured.http.ContentType;
@@ -16,7 +17,7 @@ public class CarController implements BaseApi {
     public TokenDto tokenDto;
 
     @BeforeClass
-    public void login(){
+    public void login() {
         User user = User.builder()
                 .username(PropertiesReader.getProperty("base.properties", "email"))
                 .password(PropertiesReader.getProperty("base.properties", "password"))
@@ -25,20 +26,32 @@ public class CarController implements BaseApi {
                 .body(user)
                 .contentType(ContentType.JSON)
                 .when()
-                .post(BASE_URL+LOGIN_URL)
+                .post(BASE_URL + LOGIN_URL)
                 .thenReturn()
                 .getBody()
                 .as(TokenDto.class);
     }
 
-    public Response addNewCar(Car car){
+    public Response addNewCar(Car car) {
         return given()
                 .body(car)
                 .contentType(ContentType.JSON)
                 .header(AUTH, tokenDto.getAccessToken())
                 .when()
-                .post(BASE_URL+ADD_CAR_URL)
+                .post(BASE_URL + ADD_CAR_URL)
                 .thenReturn();
 
+    }
+
+    public int getCarsCount() {
+        CarsDto cars = given()
+                .contentType(ContentType.JSON)
+                .header(AUTH, tokenDto.getAccessToken())
+                .when()
+                .get(BASE_URL + GET_ALL_CARS)
+                .then()
+                .statusCode(200)
+                .extract().as(CarsDto.class);
+        return cars.getCars().length;
     }
 }
